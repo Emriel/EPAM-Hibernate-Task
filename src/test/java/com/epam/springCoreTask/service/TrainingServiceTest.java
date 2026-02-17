@@ -50,7 +50,7 @@ class TrainingServiceTest {
         
         testTrainingType = new TrainingType();
         testTrainingType.setId(1L);
-        testTrainingType.setTrainingTypeName("Cardio");
+        testTrainingType.setName("Cardio");
         
         testTraining = new Training();
         testTraining.setId(testId);

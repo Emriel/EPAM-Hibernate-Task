@@ -42,7 +42,7 @@ public class DataInitializer {
             
             for (String typeName : trainingTypes) {
                 TrainingType type = new TrainingType();
-                type.setTrainingTypeName(typeName);
+                type.setName(typeName);
                 trainingTypeRepository.save(type);
                 log.debug("Created training type: {}", typeName);
             }

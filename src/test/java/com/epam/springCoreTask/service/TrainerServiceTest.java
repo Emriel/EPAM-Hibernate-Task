@@ -45,7 +45,7 @@ class TrainerServiceTest {
         testId = 1L;
         testSpecialization = new TrainingType();
         testSpecialization.setId(1L);
-        testSpecialization.setTrainingTypeName("Yoga");
+        testSpecialization.setName("Yoga");
         
         testTrainer = new Trainer();
         testTrainer.setId(testId);
