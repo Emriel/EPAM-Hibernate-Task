@@ -2,8 +2,6 @@ package com.epam.springCoreTask.config;
 
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -11,12 +9,12 @@ import com.epam.springCoreTask.model.TrainingType;
 import com.epam.springCoreTask.repository.TrainingTypeRepository;
 
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
+@Slf4j
 public class DataInitializer {
-    
-    private static final Logger log = LoggerFactory.getLogger(DataInitializer.class);
-    
+        
     @Autowired
     private TrainingTypeRepository trainingTypeRepository;
     

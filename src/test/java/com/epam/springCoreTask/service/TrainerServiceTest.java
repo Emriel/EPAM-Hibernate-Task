@@ -18,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.epam.springCoreTask.model.Trainer;
 import com.epam.springCoreTask.model.TrainingType;
 import com.epam.springCoreTask.repository.TrainerRepository;
+import com.epam.springCoreTask.service.impl.TrainerServiceImpl;
 import com.epam.springCoreTask.util.PasswordGenerator;
 import com.epam.springCoreTask.util.UsernameGenerator;
 
@@ -34,7 +35,7 @@ class TrainerServiceTest {
     private PasswordGenerator passwordGenerator;
 
     @InjectMocks
-    private TrainerService trainerService;
+    private TrainerServiceImpl trainerService;
 
     private Trainer testTrainer;
     private TrainingType testSpecialization;

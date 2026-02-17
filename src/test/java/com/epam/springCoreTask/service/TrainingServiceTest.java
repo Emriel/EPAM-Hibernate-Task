@@ -20,6 +20,7 @@ import com.epam.springCoreTask.model.Trainer;
 import com.epam.springCoreTask.model.Training;
 import com.epam.springCoreTask.model.TrainingType;
 import com.epam.springCoreTask.repository.TrainingRepository;
+import com.epam.springCoreTask.service.impl.TrainingServiceImpl;
 
 @ExtendWith(MockitoExtension.class)
 class TrainingServiceTest {
@@ -28,7 +29,7 @@ class TrainingServiceTest {
     private TrainingRepository trainingRepository;
 
     @InjectMocks
-    private TrainingService trainingService;
+    private TrainingServiceImpl trainingService;
 
     private Training testTraining;
     private Trainee testTrainee;
