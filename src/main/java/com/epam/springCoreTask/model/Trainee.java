@@ -1,58 +1,55 @@
 package com.epam.springCoreTask.model;
 
 import java.time.LocalDate;
-import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
 
-public class Trainee extends User {
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@Entity
+@Table(name = "trainee")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Trainee {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
+
+    @Column(name = "address")
     private String address;
-    private UUID userId;
 
-    public Trainee() {
-        super();
-        this.userId = UUID.randomUUID();
-    }
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    private User user;
 
-    public Trainee(String firstName, String lastName, String username, String password, boolean isActive,
-            LocalDate dateOfBirth, String address) {
-        super(firstName, lastName, username, password, isActive);
-        this.userId = UUID.randomUUID();
-        this.dateOfBirth = dateOfBirth;
-        this.address = address;
-    }
+    @OneToMany(mappedBy = "trainee", cascade = CascadeType.ALL)
+    private List<Training> trainings = new ArrayList<>();
 
-    public LocalDate getDateOfBirth() {
-        return dateOfBirth;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public UUID getUserId() {
-        return userId;
-    }
-
-    public void setDateOfBirth(LocalDate dateOfBirth) {
-        this.dateOfBirth = dateOfBirth;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    @Override
-    public String toString() {
-        return "Trainee{" +
-                "userId=" + userId +
-                ", dateOfBirth=" + dateOfBirth +
-                ", address='" + address + '\'' +
-                ", firstName='" + getFirstName() + '\'' +
-                ", lastName='" + getLastName() + '\'' +
-                ", Username='" + getUsername() + '\'' +
-                ", isActive=" + isActive() +
-                '}';
-    }
+    @ManyToMany
+    @JoinTable(
+        name = "trainee_trainer",
+        joinColumns = @JoinColumn(name = "trainee_id"),
+        inverseJoinColumns = @JoinColumn(name = "trainer_id")
+    )
+    private List<Trainer> trainers = new ArrayList<>();
 
 }

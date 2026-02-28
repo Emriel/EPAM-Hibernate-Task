@@ -9,7 +9,19 @@ public interface TrainerService {
 
     Trainer updateTrainer(Trainer trainer);
 
-    Trainer getTrainerById(java.util.UUID id);
+    Trainer getTrainerById(Long id);
 
     List<Trainer> getAllTrainers();
+
+    Trainer authenticateTrainer(String username, String password);
+
+    Trainer getTrainerByUsername(String username);
+
+    void changeTrainerPassword(String username, String oldPassword, String newPassword);
+
+    void activateTrainer(String username);
+
+    void deactivateTrainer(String username);
+
+    List<Trainer> getTrainersNotAssignedToTrainee(String traineeUsername);
 }

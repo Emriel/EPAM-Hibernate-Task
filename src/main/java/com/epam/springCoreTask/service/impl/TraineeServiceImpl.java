@@ -1,106 +1,194 @@
 package com.epam.springCoreTask.service.impl;
 
 import java.util.List;
-import java.util.UUID;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import com.epam.springCoreTask.dao.TraineeDAO;
 import com.epam.springCoreTask.model.Trainee;
+import com.epam.springCoreTask.model.Trainer;
+import com.epam.springCoreTask.model.User;
+import com.epam.springCoreTask.repository.TraineeRepository;
+import com.epam.springCoreTask.repository.TrainerRepository;
 import com.epam.springCoreTask.service.TraineeService;
 import com.epam.springCoreTask.util.PasswordGenerator;
 import com.epam.springCoreTask.util.UsernameGenerator;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@RequiredArgsConstructor
+@Transactional
+@Slf4j
 public class TraineeServiceImpl implements TraineeService {
 
-    private static final Logger log = LoggerFactory.getLogger(TraineeServiceImpl.class);
+    private final TraineeRepository traineeRepository;
+    private final TrainerRepository trainerRepository;
+    private final UsernameGenerator usernameGenerator;
+    private final PasswordGenerator passwordGenerator;
 
-    private TraineeDAO traineeDAO;
-    private UsernameGenerator usernameGenerator;
-    private PasswordGenerator passwordGenerator;
-
-    @Autowired
-    public void setTraineeDAO(TraineeDAO traineeDAO) {
-        this.traineeDAO = traineeDAO;
-    }
-
-    @Autowired
-    public void setUsernameGenerator(UsernameGenerator usernameGenerator) {
-        this.usernameGenerator = usernameGenerator;
-    }
-
-    @Autowired
-    public void setPasswordGenerator(PasswordGenerator passwordGenerator) {
-        this.passwordGenerator = passwordGenerator;
-    }
-
+    @Override
     public Trainee createTrainee(String firstName, String lastName, java.time.LocalDate dateOfBirth, String address) {
         log.debug("Creating trainee: {} {}, dateOfBirth: {}, address: {}", firstName, lastName, dateOfBirth, address);
 
-        List<String> existingUsernames = traineeDAO.findAllUsernames();
+        List<String> existingUsernames = traineeRepository.findAllUsernames();
 
         String username = usernameGenerator.generateUsername(firstName, lastName, existingUsernames);
         String password = passwordGenerator.generatePassword();
 
+        User user = new User();
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setUsername(username);
+        user.setPassword(password);
+        user.setActive(true);
+
         Trainee trainee = new Trainee();
-        trainee.setFirstName(firstName);
-        trainee.setLastName(lastName);
+        trainee.setUser(user);
         trainee.setDateOfBirth(dateOfBirth);
         trainee.setAddress(address);
-        trainee.setUsername(username);
-        trainee.setPassword(password);
-        trainee.setActive(true);
 
-        Trainee createdTrainee = traineeDAO.save(trainee);
-        log.info("Trainee created successfully: userId={}, username={}", createdTrainee.getUserId(),
-                createdTrainee.getUsername());
+        Trainee createdTrainee = traineeRepository.save(trainee);
+        log.info("Trainee created successfully: id={}, username={}", createdTrainee.getId(),
+                createdTrainee.getUser().getUsername());
 
         return createdTrainee;
     }
 
+    @Override
     public Trainee updateTrainee(Trainee trainee) {
-        log.debug("Updating trainee: userId={}, username={}", trainee.getUserId(), trainee.getUsername());
+        log.debug("Updating trainee: id={}, username={}", trainee.getId(), trainee.getUser().getUsername());
 
-        Trainee updatedTrainee = traineeDAO.save(trainee);
-        log.info("Trainee updated successfully: userId={}", trainee.getUserId());
+        Trainee updatedTrainee = traineeRepository.save(trainee);
+        log.info("Trainee updated successfully: id={}", trainee.getId());
 
         return updatedTrainee;
     }
 
+    @Override
     public void deleteTrainee(Trainee trainee) {
-        log.debug("Deleting trainee: userId={}, username={}", trainee.getUserId(), trainee.getUsername());
+        log.debug("Deleting trainee: id={}, username={}", trainee.getId(), trainee.getUser().getUsername());
 
-        boolean deleted = traineeDAO.delete(trainee.getUserId());
-        if (deleted) {
-            log.info("Trainee deleted successfully: userId={}", trainee.getUserId());
-        } else {
-            log.warn("Trainee not found for deletion: userId={}", trainee.getUserId());
-        }
+        traineeRepository.delete(trainee);
+        log.info("Trainee deleted successfully: id={}", trainee.getId());
     }
 
-    public Trainee getTraineeById(UUID id) {
+    @Override
+    @Transactional(readOnly = true)
+    public Trainee getTraineeById(Long id) {
         log.debug("Fetching trainee by id: {}", id);
 
-        Trainee trainee = traineeDAO.findById(id);
-        if (trainee != null) {
-            log.debug("Trainee found: username={}", trainee.getUsername());
-        } else {
-            log.warn("Trainee not found with id: {}", id);
-        }
-
-        return trainee;
+        return traineeRepository.findById(id).orElse(null);
     }
 
+    @Override
+    @Transactional(readOnly = true)
     public List<Trainee> getAllTrainees() {
         log.debug("Fetching all trainees");
 
-        List<Trainee> trainees = traineeDAO.findAll();
+        List<Trainee> trainees = traineeRepository.findAll();
         log.debug("Found {} trainees", trainees.size());
 
         return trainees;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Trainee authenticateTrainee(String username, String password) {
+        log.debug("Authenticating trainee: username={}", username);
+
+        Trainee trainee = traineeRepository.findByUsernameAndPassword(username, password)
+                .orElseThrow(() -> {
+                    log.warn("Authentication failed for trainee: username={}", username);
+                    return new IllegalArgumentException("Invalid username or password");
+                });
+
+        log.info("Trainee authenticated successfully: username={}", username);
+        return trainee;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Trainee getTraineeByUsername(String username) {
+        log.debug("Fetching trainee by username: {}", username);
+
+        return traineeRepository.findByUser_Username(username)
+                .orElseThrow(() -> {
+                    log.warn("Trainee not found: username={}", username);
+                    return new IllegalArgumentException("Trainee not found with username: " + username);
+                });
+    }
+
+    @Override
+    public void changeTraineePassword(String username, String oldPassword, String newPassword) {
+        log.debug("Changing password for trainee: username={}", username);
+
+        Trainee trainee = traineeRepository.findByUsernameAndPassword(username, oldPassword)
+                .orElseThrow(() -> {
+                    log.warn("Password change failed - invalid credentials: username={}", username);
+                    return new IllegalArgumentException("Invalid username or password");
+                });
+
+        trainee.getUser().setPassword(newPassword);
+        traineeRepository.save(trainee);
+
+        log.info("Password changed successfully for trainee: username={}", username);
+    }
+
+    @Override
+    public void activateTrainee(String username) {
+        log.debug("Activating trainee: username={}", username);
+
+        Trainee trainee = getTraineeByUsername(username);
+        trainee.getUser().setActive(true);
+        traineeRepository.save(trainee);
+
+        log.info("Trainee activated successfully: username={}", username);
+    }
+
+    @Override
+    public void deactivateTrainee(String username) {
+        log.debug("Deactivating trainee: username={}", username);
+
+        Trainee trainee = getTraineeByUsername(username);
+        trainee.getUser().setActive(false);
+        traineeRepository.save(trainee);
+
+        log.info("Trainee deactivated successfully: username={}", username);
+    }
+
+    @Override
+    public void deleteTraineeByUsername(String username) {
+        log.debug("Deleting trainee by username: {}", username);
+
+        Trainee trainee = getTraineeByUsername(username);
+        traineeRepository.delete(trainee);
+
+        log.info("Trainee deleted successfully: username={}", username);
+    }
+
+    @Override
+    public void updateTraineeTrainersList(String traineeUsername, List<String> trainerUsernames) {
+        log.debug("Updating trainers list for trainee: traineeUsername={}, trainerUsernames={}",
+                traineeUsername, trainerUsernames);
+
+        Trainee trainee = getTraineeByUsername(traineeUsername);
+
+        // Clear existing trainers
+        trainee.getTrainers().clear();
+
+        // Add new trainers
+        if (trainerUsernames != null && !trainerUsernames.isEmpty()) {
+            for (String trainerUsername : trainerUsernames) {
+                Trainer trainer = trainerRepository.findByUser_Username(trainerUsername)
+                        .orElseThrow(() -> new IllegalArgumentException("Trainer not found: " + trainerUsername));
+                trainee.getTrainers().add(trainer);
+            }
+        }
+
+        traineeRepository.save(trainee);
+        log.info("Trainers list updated successfully for trainee: username={}, trainers count={}",
+                traineeUsername, trainee.getTrainers().size());
     }
 }

@@ -1,46 +1,46 @@
 package com.epam.springCoreTask.model;
 
-import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
 
-public class Trainer extends User {
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-    private UUID userId;
-    private String specialization;
+@Entity
+@Table(name = "trainer")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class Trainer {
 
-    public Trainer() {
-        super();
-        this.userId = UUID.randomUUID();
-    }
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    public Trainer(String firstName, String lastName, String username, String password, boolean isActive,
-            String specialization) {
-        super(firstName, lastName, username, password, isActive);
-        this.userId = UUID.randomUUID();
-        this.specialization = specialization;
-    }
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    private User user;
 
-    public UUID getUserId() {
-        return userId;
-    }
+    @ManyToOne
+    @JoinColumn(name = "specialization", referencedColumnName = "id")
+    private TrainingType specialization;
 
-    public String getSpecialization() {
-        return specialization;
-    }
+    @OneToMany(mappedBy = "trainer", cascade = CascadeType.ALL)
+    private List<Training> trainings = new ArrayList<>();
 
-    public void setSpecialization(String specialization) {
-        this.specialization = specialization;
-    }
-
-    @Override
-    public String toString() {
-        return "Trainer{" +
-                "userId=" + userId +
-                ", specialization='" + specialization + '\'' +
-                ", firstName='" + getFirstName() + '\'' +
-                ", lastName='" + getLastName() + '\'' +
-                ", Username='" + getUsername() + '\'' +
-                ", isActive=" + isActive() +
-                '}';
-    }
+    @ManyToMany(mappedBy = "trainers")
+    private List<Trainee> trainees = new ArrayList<>();
 
 }

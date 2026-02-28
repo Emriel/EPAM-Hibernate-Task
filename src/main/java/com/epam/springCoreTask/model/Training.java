@@ -1,98 +1,49 @@
 package com.epam.springCoreTask.model;
 
 import java.time.LocalDate;
-import java.util.UUID;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Table(name = "training")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Training {
 
-    private UUID traineeId;
-    private UUID trainerId;
-    private UUID trainingId;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "trainee_id", referencedColumnName = "id", nullable = false)
+    private Trainee trainee;
+
+    @ManyToOne
+    @JoinColumn(name = "trainer_id", referencedColumnName = "id", nullable = false)
+    private Trainer trainer;
+
+    @Column(name = "training_name", nullable = false)
     private String trainingName;
+
+    @ManyToOne
+    @JoinColumn(name = "training_type_id", referencedColumnName = "id", nullable = false)
     private TrainingType trainingType;
+
+    @Column(name = "training_date", nullable = false)
     private LocalDate trainingDate;
+
+    @Column(name = "training_duration", nullable = false)
     private int trainingDuration;
 
-    public Training() {
-    }
-
-    public Training(UUID traineeId, UUID trainerId, UUID trainingId, String trainingName, TrainingType trainingType,
-            LocalDate trainingDate, int trainingDuration) {
-        this.traineeId = traineeId;
-        this.trainerId = trainerId;
-        this.trainingId = trainingId;
-        this.trainingName = trainingName;
-        this.trainingType = trainingType;
-        this.trainingDate = trainingDate;
-        this.trainingDuration = trainingDuration;
-    }
-
-    public UUID getTraineeId() {
-        return traineeId;
-    }
-
-    public UUID getTrainerId() {
-        return trainerId;
-    }
-
-    public String getTrainingName() {
-        return trainingName;
-    }
-
-    public UUID getTrainingId() {
-        return trainingId;
-    }
-
-    public TrainingType getTrainingType() {
-        return trainingType;
-    }
-
-    public LocalDate getTrainingDate() {
-        return trainingDate;
-    }
-
-    public int getTrainingDuration() {
-        return trainingDuration;
-    }
-
-    public void setTraineeId(UUID traineeId) {
-        this.traineeId = traineeId;
-    }
-
-    public void setTrainerId(UUID trainerId) {
-        this.trainerId = trainerId;
-    }
-
-    public void setTrainingName(String trainingName) {
-        this.trainingName = trainingName;
-    }
-
-    public void setTrainingId(UUID trainingId) {
-        this.trainingId = trainingId;
-    }
-
-    public void setTrainingType(TrainingType trainingType) {
-        this.trainingType = trainingType;
-    }
-
-    public void setTrainingDate(LocalDate trainingDate) {
-        this.trainingDate = trainingDate;
-    }
-
-    public void setTrainingDuration(int trainingDuration) {
-        this.trainingDuration = trainingDuration;
-    }
-
-    @Override
-    public String toString() {
-        return "Training{" +
-                "traineeId=" + traineeId +
-                ", trainerId=" + trainerId +
-                ", trainingId=" + trainingId +
-                ", trainingName='" + trainingName + '\'' +
-                ", trainingType=" + trainingType +
-                ", trainingDate=" + trainingDate +
-                ", trainingDuration=" + trainingDuration +
-                '}';
-    }
 }
