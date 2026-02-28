@@ -11,6 +11,7 @@ import com.epam.springCoreTask.model.User;
 import com.epam.springCoreTask.repository.TraineeRepository;
 import com.epam.springCoreTask.repository.TrainerRepository;
 import com.epam.springCoreTask.service.TraineeService;
+import com.epam.springCoreTask.service.UserService;
 import com.epam.springCoreTask.util.PasswordGenerator;
 import com.epam.springCoreTask.util.UsernameGenerator;
 
@@ -27,6 +28,7 @@ public class TraineeServiceImpl implements TraineeService {
     private final TrainerRepository trainerRepository;
     private final UsernameGenerator usernameGenerator;
     private final PasswordGenerator passwordGenerator;
+    private final UserService userService;
 
     @Override
     public Trainee createTrainee(String firstName, String lastName, java.time.LocalDate dateOfBirth, String address) {
@@ -96,16 +98,12 @@ public class TraineeServiceImpl implements TraineeService {
     @Override
     @Transactional(readOnly = true)
     public Trainee authenticateTrainee(String username, String password) {
-        log.debug("Authenticating trainee: username={}", username);
-
-        Trainee trainee = traineeRepository.findByUsernameAndPassword(username, password)
-                .orElseThrow(() -> {
-                    log.warn("Authentication failed for trainee: username={}", username);
-                    return new IllegalArgumentException("Invalid username or password");
-                });
-
-        log.info("Trainee authenticated successfully: username={}", username);
-        return trainee;
+        return userService.authenticate(
+                username,
+                password,
+                traineeRepository::findByUsernameAndPassword,
+                "trainee"
+        );
     }
 
     @Override
@@ -122,40 +120,37 @@ public class TraineeServiceImpl implements TraineeService {
 
     @Override
     public void changeTraineePassword(String username, String oldPassword, String newPassword) {
-        log.debug("Changing password for trainee: username={}", username);
-
-        Trainee trainee = traineeRepository.findByUsernameAndPassword(username, oldPassword)
-                .orElseThrow(() -> {
-                    log.warn("Password change failed - invalid credentials: username={}", username);
-                    return new IllegalArgumentException("Invalid username or password");
-                });
-
-        trainee.getUser().setPassword(newPassword);
-        traineeRepository.save(trainee);
-
-        log.info("Password changed successfully for trainee: username={}", username);
+        userService.changePassword(
+                username,
+                oldPassword,
+                newPassword,
+                traineeRepository::findByUsernameAndPassword,
+                Trainee::getUser,
+                traineeRepository::save,
+                "trainee"
+        );
     }
 
     @Override
     public void activateTrainee(String username) {
-        log.debug("Activating trainee: username={}", username);
-
-        Trainee trainee = getTraineeByUsername(username);
-        trainee.getUser().setActive(true);
-        traineeRepository.save(trainee);
-
-        log.info("Trainee activated successfully: username={}", username);
+        userService.activateEntity(
+                username,
+                this::getTraineeByUsername,
+                Trainee::getUser,
+                traineeRepository::save,
+                "trainee"
+        );
     }
 
     @Override
     public void deactivateTrainee(String username) {
-        log.debug("Deactivating trainee: username={}", username);
-
-        Trainee trainee = getTraineeByUsername(username);
-        trainee.getUser().setActive(false);
-        traineeRepository.save(trainee);
-
-        log.info("Trainee deactivated successfully: username={}", username);
+        userService.deactivateEntity(
+                username,
+                this::getTraineeByUsername,
+                Trainee::getUser,
+                traineeRepository::save,
+                "trainee"
+        );
     }
 
     @Override

@@ -11,6 +11,7 @@ import com.epam.springCoreTask.model.User;
 import com.epam.springCoreTask.repository.TrainerRepository;
 import com.epam.springCoreTask.repository.TrainingTypeRepository;
 import com.epam.springCoreTask.service.TrainerService;
+import com.epam.springCoreTask.service.UserService;
 import com.epam.springCoreTask.util.PasswordGenerator;
 import com.epam.springCoreTask.util.UsernameGenerator;
 
@@ -27,6 +28,7 @@ public class TrainerServiceImpl implements TrainerService {
     private final TrainingTypeRepository trainingTypeRepository;
     private final UsernameGenerator usernameGenerator;
     private final PasswordGenerator passwordGenerator;
+    private final UserService userService;
 
     @Override
     public Trainer createTrainer(String firstName, String lastName, String specialization) {
@@ -95,16 +97,12 @@ public class TrainerServiceImpl implements TrainerService {
     @Override
     @Transactional(readOnly = true)
     public Trainer authenticateTrainer(String username, String password) {
-        log.debug("Authenticating trainer: username={}", username);
-
-        Trainer trainer = trainerRepository.findByUsernameAndPassword(username, password)
-                .orElseThrow(() -> {
-                    log.warn("Authentication failed for trainer: username={}", username);
-                    return new IllegalArgumentException("Invalid username or password");
-                });
-
-        log.info("Trainer authenticated successfully: username={}", username);
-        return trainer;
+        return userService.authenticate(
+                username,
+                password,
+                trainerRepository::findByUsernameAndPassword,
+                "trainer"
+        );
     }
 
     @Override
@@ -121,40 +119,37 @@ public class TrainerServiceImpl implements TrainerService {
 
     @Override
     public void changeTrainerPassword(String username, String oldPassword, String newPassword) {
-        log.debug("Changing password for trainer: username={}", username);
-
-        Trainer trainer = trainerRepository.findByUsernameAndPassword(username, oldPassword)
-                .orElseThrow(() -> {
-                    log.warn("Password change failed - invalid credentials: username={}", username);
-                    return new IllegalArgumentException("Invalid username or password");
-                });
-
-        trainer.getUser().setPassword(newPassword);
-        trainerRepository.save(trainer);
-
-        log.info("Password changed successfully for trainer: username={}", username);
+        userService.changePassword(
+                username,
+                oldPassword,
+                newPassword,
+                trainerRepository::findByUsernameAndPassword,
+                Trainer::getUser,
+                trainerRepository::save,
+                "trainer"
+        );
     }
 
     @Override
     public void activateTrainer(String username) {
-        log.debug("Activating trainer: username={}", username);
-
-        Trainer trainer = getTrainerByUsername(username);
-        trainer.getUser().setActive(true);
-        trainerRepository.save(trainer);
-
-        log.info("Trainer activated successfully: username={}", username);
+        userService.activateEntity(
+                username,
+                this::getTrainerByUsername,
+                Trainer::getUser,
+                trainerRepository::save,
+                "trainer"
+        );
     }
 
     @Override
     public void deactivateTrainer(String username) {
-        log.debug("Deactivating trainer: username={}", username);
-
-        Trainer trainer = getTrainerByUsername(username);
-        trainer.getUser().setActive(false);
-        trainerRepository.save(trainer);
-
-        log.info("Trainer deactivated successfully: username={}", username);
+        userService.deactivateEntity(
+                username,
+                this::getTrainerByUsername,
+                Trainer::getUser,
+                trainerRepository::save,
+                "trainer"
+        );
     }
 
     @Override
