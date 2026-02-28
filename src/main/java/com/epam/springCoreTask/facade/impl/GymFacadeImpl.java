@@ -66,7 +66,7 @@ public class GymFacadeImpl implements GymFacade {
 
         List<Training> allTrainings = trainingService.getAllTrainings();
         return allTrainings.stream()
-                .filter(training -> training.getTrainee() != null && 
+                .filter(training -> training.getTrainee() != null &&
                         training.getTrainee().getId().equals(traineeId))
                 .collect(Collectors.toList());
     }
@@ -76,7 +76,7 @@ public class GymFacadeImpl implements GymFacade {
 
         List<Training> allTrainings = trainingService.getAllTrainings();
         return allTrainings.stream()
-                .filter(training -> training.getTrainer() != null && 
+                .filter(training -> training.getTrainer() != null &&
                         training.getTrainer().getId().equals(trainerId))
                 .collect(Collectors.toList());
     }
@@ -186,7 +186,8 @@ public class GymFacadeImpl implements GymFacade {
     public List<Training> getTraineeTrainingsWithCriteria(String traineeUsername, LocalDate fromDate,
             LocalDate toDate, String trainerName, String trainingTypeName) {
         log.info("Fetching trainee trainings with criteria through facade: traineeUsername={}", traineeUsername);
-        return trainingService.getTraineeTrainingsWithCriteria(traineeUsername, fromDate, toDate, trainerName, trainingTypeName);
+        return trainingService.getTraineeTrainingsWithCriteria(traineeUsername, fromDate, toDate, trainerName,
+                trainingTypeName);
     }
 
     public List<Training> getTrainerTrainingsWithCriteria(String trainerUsername, LocalDate fromDate,

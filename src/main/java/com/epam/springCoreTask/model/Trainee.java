@@ -45,11 +45,7 @@ public class Trainee {
     private List<Training> trainings = new ArrayList<>();
 
     @ManyToMany
-    @JoinTable(
-        name = "trainee_trainer",
-        joinColumns = @JoinColumn(name = "trainee_id"),
-        inverseJoinColumns = @JoinColumn(name = "trainer_id")
-    )
+    @JoinTable(name = "trainee_trainer", joinColumns = @JoinColumn(name = "trainee_id"), inverseJoinColumns = @JoinColumn(name = "trainer_id"))
     private List<Trainer> trainers = new ArrayList<>();
 
 }

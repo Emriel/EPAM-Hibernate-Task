@@ -8,16 +8,16 @@ import com.epam.springCoreTask.model.TrainingType;
 
 public interface TrainingService {
 
-    Training createTraining(Long traineeId, Long trainerId, String trainingName,
-            TrainingType trainingType, LocalDate trainingDate, int trainingDuration);
+        Training createTraining(Long traineeId, Long trainerId, String trainingName,
+                        TrainingType trainingType, LocalDate trainingDate, int trainingDuration);
 
-    Training getTrainingById(Long id);
+        Training getTrainingById(Long id);
 
-    List<Training> getAllTrainings();
+        List<Training> getAllTrainings();
 
-    List<Training> getTraineeTrainingsWithCriteria(String traineeUsername, LocalDate fromDate,
-            LocalDate toDate, String trainerName, String trainingTypeName);
+        List<Training> getTraineeTrainingsWithCriteria(String traineeUsername, LocalDate fromDate,
+                        LocalDate toDate, String trainerName, String trainingTypeName);
 
-    List<Training> getTrainerTrainingsWithCriteria(String trainerUsername, LocalDate fromDate,
-            LocalDate toDate, String traineeName);
+        List<Training> getTrainerTrainingsWithCriteria(String trainerUsername, LocalDate fromDate,
+                        LocalDate toDate, String traineeName);
 }

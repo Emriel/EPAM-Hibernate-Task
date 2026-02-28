@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.epam.springCoreTask.dto.AuthenticationDTO;
 import com.epam.springCoreTask.model.Trainer;
 
 @Repository
@@ -17,8 +18,8 @@ public interface TrainerRepository extends JpaRepository<Trainer, Long> {
 
     List<Trainer> findByUser_UsernameIn(List<String> usernames);
 
-    @Query("SELECT t FROM Trainer t WHERE t.user.username = :username AND t.user.password = :password")
-    Optional<Trainer> findByUsernameAndPassword(@Param("username") String username, @Param("password") String password);
+    @Query("SELECT t FROM Trainer t WHERE t.user.username = :#{#auth.username} AND t.user.password = :#{#auth.password}")
+    Optional<Trainer> findByUsernameAndPassword(@Param("auth") AuthenticationDTO auth);
 
     boolean existsByUser_Username(String username);
 

@@ -101,8 +101,7 @@ public class TrainerServiceImpl implements TrainerService {
                 username,
                 password,
                 trainerRepository::findByUsernameAndPassword,
-                "trainer"
-        );
+                "trainer");
     }
 
     @Override
@@ -126,8 +125,7 @@ public class TrainerServiceImpl implements TrainerService {
                 trainerRepository::findByUsernameAndPassword,
                 Trainer::getUser,
                 trainerRepository::save,
-                "trainer"
-        );
+                "trainer");
     }
 
     @Override
@@ -137,8 +135,7 @@ public class TrainerServiceImpl implements TrainerService {
                 this::getTrainerByUsername,
                 Trainer::getUser,
                 trainerRepository::save,
-                "trainer"
-        );
+                "trainer");
     }
 
     @Override
@@ -148,8 +145,7 @@ public class TrainerServiceImpl implements TrainerService {
                 this::getTrainerByUsername,
                 Trainer::getUser,
                 trainerRepository::save,
-                "trainer"
-        );
+                "trainer");
     }
 
     @Override

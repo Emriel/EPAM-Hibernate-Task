@@ -25,14 +25,14 @@ public class DataInitializer implements CommandLineRunner {
         log.info("Initializing training types...");
 
         String[] trainingTypes = {
-            "FITNESS",
-            "YOGA",
-            "ZUMBA",
-            "STRETCHING",
-            "RESISTANCE",
-            "CARDIO",
-            "PILATES",
-            "CROSSFIT"
+                "FITNESS",
+                "YOGA",
+                "ZUMBA",
+                "STRETCHING",
+                "RESISTANCE",
+                "CARDIO",
+                "PILATES",
+                "CROSSFIT"
         };
 
         for (String typeName : trainingTypes) {

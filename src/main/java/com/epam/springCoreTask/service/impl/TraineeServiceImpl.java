@@ -102,8 +102,7 @@ public class TraineeServiceImpl implements TraineeService {
                 username,
                 password,
                 traineeRepository::findByUsernameAndPassword,
-                "trainee"
-        );
+                "trainee");
     }
 
     @Override
@@ -127,8 +126,7 @@ public class TraineeServiceImpl implements TraineeService {
                 traineeRepository::findByUsernameAndPassword,
                 Trainee::getUser,
                 traineeRepository::save,
-                "trainee"
-        );
+                "trainee");
     }
 
     @Override
@@ -138,8 +136,7 @@ public class TraineeServiceImpl implements TraineeService {
                 this::getTraineeByUsername,
                 Trainee::getUser,
                 traineeRepository::save,
-                "trainee"
-        );
+                "trainee");
     }
 
     @Override
@@ -149,8 +146,7 @@ public class TraineeServiceImpl implements TraineeService {
                 this::getTraineeByUsername,
                 Trainee::getUser,
                 traineeRepository::save,
-                "trainee"
-        );
+                "trainee");
     }
 
     @Override

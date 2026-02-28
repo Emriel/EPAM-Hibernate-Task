@@ -6,6 +6,8 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.epam.springCoreTask.dto.TraineeTrainingCriteriaDTO;
+import com.epam.springCoreTask.dto.TrainerTrainingCriteriaDTO;
 import com.epam.springCoreTask.model.Trainee;
 import com.epam.springCoreTask.model.Trainer;
 import com.epam.springCoreTask.model.Training;
@@ -24,81 +26,96 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class TrainingServiceImpl implements TrainingService {
 
-    private final TrainingRepository trainingRepository;
-    private final TraineeRepository traineeRepository;
-    private final TrainerRepository trainerRepository;
+        private final TrainingRepository trainingRepository;
+        private final TraineeRepository traineeRepository;
+        private final TrainerRepository trainerRepository;
 
-    @Override
-    public Training createTraining(Long traineeId, Long trainerId, String trainingName,
-            TrainingType trainingType, LocalDate trainingDate, int trainingDuration) {
-        log.debug("Creating training: name={}, traineeId={}, trainerId={}, date={}, duration={}",
-                trainingName, traineeId, trainerId, trainingDate, trainingDuration);
+        @Override
+        public Training createTraining(Long traineeId, Long trainerId, String trainingName,
+                        TrainingType trainingType, LocalDate trainingDate, int trainingDuration) {
+                log.debug("Creating training: name={}, traineeId={}, trainerId={}, date={}, duration={}",
+                                trainingName, traineeId, trainerId, trainingDate, trainingDuration);
 
-        Trainee trainee = traineeRepository.findById(traineeId)
-                .orElseThrow(() -> new IllegalArgumentException("Trainee not found with id: " + traineeId));
-        
-        Trainer trainer = trainerRepository.findById(trainerId)
-                .orElseThrow(() -> new IllegalArgumentException("Trainer not found with id: " + trainerId));
+                Trainee trainee = traineeRepository.findById(traineeId)
+                                .orElseThrow(() -> new IllegalArgumentException(
+                                                "Trainee not found with id: " + traineeId));
 
-        Training training = new Training();
-        training.setTrainee(trainee);
-        training.setTrainer(trainer);
-        training.setTrainingName(trainingName);
-        training.setTrainingType(trainingType);
-        training.setTrainingDate(trainingDate);
-        training.setTrainingDuration(trainingDuration);
+                Trainer trainer = trainerRepository.findById(trainerId)
+                                .orElseThrow(() -> new IllegalArgumentException(
+                                                "Trainer not found with id: " + trainerId));
 
-        Training createdTraining = trainingRepository.save(training);
-        log.info("Training created successfully: id={}, name={}", createdTraining.getId(), trainingName);
+                Training training = new Training();
+                training.setTrainee(trainee);
+                training.setTrainer(trainer);
+                training.setTrainingName(trainingName);
+                training.setTrainingType(trainingType);
+                training.setTrainingDate(trainingDate);
+                training.setTrainingDuration(trainingDuration);
 
-        return createdTraining;
-    }
+                Training createdTraining = trainingRepository.save(training);
+                log.info("Training created successfully: id={}, name={}", createdTraining.getId(), trainingName);
 
-    @Override
-    @Transactional(readOnly = true)
-    public Training getTrainingById(Long id) {
-        log.debug("Fetching training by id: {}", id);
+                return createdTraining;
+        }
 
-        return trainingRepository.findById(id).orElse(null);
-    }
+        @Override
+        @Transactional(readOnly = true)
+        public Training getTrainingById(Long id) {
+                log.debug("Fetching training by id: {}", id);
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<Training> getAllTrainings() {
-        log.debug("Fetching all trainings");
+                return trainingRepository.findById(id).orElse(null);
+        }
 
-        List<Training> trainings = trainingRepository.findAll();
-        log.debug("Found {} trainings", trainings.size());
+        @Override
+        @Transactional(readOnly = true)
+        public List<Training> getAllTrainings() {
+                log.debug("Fetching all trainings");
 
-        return trainings;
-    }
+                List<Training> trainings = trainingRepository.findAll();
+                log.debug("Found {} trainings", trainings.size());
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<Training> getTraineeTrainingsWithCriteria(String traineeUsername, LocalDate fromDate,
-            LocalDate toDate, String trainerName, String trainingTypeName) {
-        log.debug("Fetching trainee trainings with criteria: traineeUsername={}, fromDate={}, toDate={}, trainerName={}, trainingType={}",
-                traineeUsername, fromDate, toDate, trainerName, trainingTypeName);
+                return trainings;
+        }
 
-        List<Training> trainings = trainingRepository.findTraineeTrainings(
-                traineeUsername, fromDate, toDate, trainerName, trainingTypeName);
+        @Override
+        @Transactional(readOnly = true)
+        public List<Training> getTraineeTrainingsWithCriteria(String traineeUsername, LocalDate fromDate,
+                        LocalDate toDate, String trainerName, String trainingTypeName) {
+                log.debug("Fetching trainee trainings with criteria: traineeUsername={}, fromDate={}, toDate={}, trainerName={}, trainingType={}",
+                                traineeUsername, fromDate, toDate, trainerName, trainingTypeName);
 
-        log.info("Found {} trainings for trainee: {}", trainings.size(), traineeUsername);
-        return trainings;
-    }
+                TraineeTrainingCriteriaDTO criteria = TraineeTrainingCriteriaDTO.builder()
+                                .traineeUsername(traineeUsername)
+                                .fromDate(fromDate)
+                                .toDate(toDate)
+                                .trainerName(trainerName)
+                                .trainingTypeName(trainingTypeName)
+                                .build();
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<Training> getTrainerTrainingsWithCriteria(String trainerUsername, LocalDate fromDate,
-            LocalDate toDate, String traineeName) {
-        log.debug("Fetching trainer trainings with criteria: trainerUsername={}, fromDate={}, toDate={}, traineeName={}",
-                trainerUsername, fromDate, toDate, traineeName);
+                List<Training> trainings = trainingRepository.findTraineeTrainings(criteria);
 
-        List<Training> trainings = trainingRepository.findTrainerTrainings(
-                trainerUsername, fromDate, toDate, traineeName);
+                log.info("Found {} trainings for trainee: {}", trainings.size(), traineeUsername);
+                return trainings;
+        }
 
-        log.info("Found {} trainings for trainer: {}", trainings.size(), trainerUsername);
-        return trainings;
-    }
+        @Override
+        @Transactional(readOnly = true)
+        public List<Training> getTrainerTrainingsWithCriteria(String trainerUsername, LocalDate fromDate,
+                        LocalDate toDate, String traineeName) {
+                log.debug("Fetching trainer trainings with criteria: trainerUsername={}, fromDate={}, toDate={}, traineeName={}",
+                                trainerUsername, fromDate, toDate, traineeName);
+
+                TrainerTrainingCriteriaDTO criteria = TrainerTrainingCriteriaDTO.builder()
+                                .trainerUsername(trainerUsername)
+                                .fromDate(fromDate)
+                                .toDate(toDate)
+                                .traineeName(traineeName)
+                                .build();
+
+                List<Training> trainings = trainingRepository.findTrainerTrainings(criteria);
+
+                log.info("Found {} trainings for trainer: {}", trainings.size(), trainerUsername);
+                return trainings;
+        }
 
 }
