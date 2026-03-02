@@ -7,20 +7,29 @@ import java.util.function.Function;
 import org.springframework.stereotype.Service;
 
 import com.epam.springCoreTask.dto.AuthenticationDTO;
+import com.epam.springCoreTask.exception.ValidationException;
 import com.epam.springCoreTask.model.User;
 import com.epam.springCoreTask.service.UserService;
+import com.epam.springCoreTask.util.ValidationUtil;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class UserServiceImpl implements UserService {
+
+        private final ValidationUtil validationUtil;
 
         @Override
         public <T> T authenticate(String username, String password,
                         Function<AuthenticationDTO, Optional<T>> repositoryFinder,
                         String entityType) {
                 log.debug("Authenticating {}: username={}", entityType, username);
+
+                validationUtil.validateNotBlank(username, "Username");
+                validationUtil.validateNotBlank(password, "Password");
 
                 AuthenticationDTO auth = AuthenticationDTO.builder()
                                 .username(username)
@@ -46,6 +55,10 @@ public class UserServiceImpl implements UserService {
                         String entityType) {
                 log.debug("Changing password for {}: username={}", entityType, username);
 
+                validationUtil.validateNotBlank(username, "Username");
+                validationUtil.validateNotBlank(oldPassword, "Old password");
+                validationUtil.validateNotBlank(newPassword, "New password");
+
                 AuthenticationDTO auth = AuthenticationDTO.builder()
                                 .username(username)
                                 .password(oldPassword)
@@ -55,7 +68,8 @@ public class UserServiceImpl implements UserService {
                                 .orElseThrow(() -> {
                                         log.warn("Password change failed - invalid credentials for {}: username={}",
                                                         entityType, username);
-                                        return new IllegalArgumentException("Invalid username or password");
+                                        return new ValidationException(
+                                                        "Invalid username or old password does not match");
                                 });
 
                 User user = userGetter.apply(entity);
@@ -73,6 +87,8 @@ public class UserServiceImpl implements UserService {
                         String entityType) {
                 log.debug("Activating {}: username={}", entityType, username);
 
+                validationUtil.validateNotBlank(username, "Username");
+
                 T entity = entityGetter.apply(username);
                 User user = userGetter.apply(entity);
                 user.setActive(true);
@@ -89,6 +105,8 @@ public class UserServiceImpl implements UserService {
                         Consumer<T> saver,
                         String entityType) {
                 log.debug("Deactivating {}: username={}", entityType, username);
+
+                validationUtil.validateNotBlank(username, "Username");
 
                 T entity = entityGetter.apply(username);
                 User user = userGetter.apply(entity);

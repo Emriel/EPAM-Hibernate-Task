@@ -8,6 +8,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.epam.springCoreTask.dto.TraineeTrainingCriteriaDTO;
 import com.epam.springCoreTask.dto.TrainerTrainingCriteriaDTO;
+import com.epam.springCoreTask.exception.EntityNotFoundException;
+import com.epam.springCoreTask.exception.TraineeNotAvailableException;
+import com.epam.springCoreTask.exception.TrainerNotAssignedException;
+import com.epam.springCoreTask.exception.TrainerNotAvailableException;
+import com.epam.springCoreTask.exception.ValidationException;
 import com.epam.springCoreTask.model.Trainee;
 import com.epam.springCoreTask.model.Trainer;
 import com.epam.springCoreTask.model.Training;
@@ -15,7 +20,9 @@ import com.epam.springCoreTask.model.TrainingType;
 import com.epam.springCoreTask.repository.TraineeRepository;
 import com.epam.springCoreTask.repository.TrainerRepository;
 import com.epam.springCoreTask.repository.TrainingRepository;
+import com.epam.springCoreTask.repository.TrainingTypeRepository;
 import com.epam.springCoreTask.service.TrainingService;
+import com.epam.springCoreTask.util.ValidationUtil;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +36,8 @@ public class TrainingServiceImpl implements TrainingService {
         private final TrainingRepository trainingRepository;
         private final TraineeRepository traineeRepository;
         private final TrainerRepository trainerRepository;
+        private final TrainingTypeRepository trainingTypeRepository;
+        private final ValidationUtil validationUtil;
 
         @Override
         public Training createTraining(Long traineeId, Long trainerId, String trainingName,
@@ -36,19 +45,80 @@ public class TrainingServiceImpl implements TrainingService {
                 log.debug("Creating training: name={}, traineeId={}, trainerId={}, date={}, duration={}",
                                 trainingName, traineeId, trainerId, trainingDate, trainingDuration);
 
+                validationUtil.validateNotNull(traineeId, "Trainee ID");
+                validationUtil.validateNotNull(trainerId, "Trainer ID");
+                validationUtil.validateNotBlank(trainingName, "Training name");
+                validationUtil.validateNotNull(trainingType, "Training type");
+                validationUtil.validateNotNull(trainingType.getId(), "Training type ID");
+
                 Trainee trainee = traineeRepository.findById(traineeId)
-                                .orElseThrow(() -> new IllegalArgumentException(
-                                                "Trainee not found with id: " + traineeId));
+                                .orElseThrow(() -> {
+                                        log.error("Trainee not found with id: {}", traineeId);
+                                        return new EntityNotFoundException("Trainee not found with id: " + traineeId);
+                                });
 
                 Trainer trainer = trainerRepository.findById(trainerId)
-                                .orElseThrow(() -> new IllegalArgumentException(
-                                                "Trainer not found with id: " + trainerId));
+                                .orElseThrow(() -> {
+                                        log.error("Trainer not found with id: {}", trainerId);
+                                        return new EntityNotFoundException("Trainer not found with id: " + trainerId);
+                                });
+
+                if (!trainee.getTrainers().contains(trainer)) {
+                        log.error("Trainer {} is not assigned to trainee {}", trainerId, traineeId);
+                        throw new TrainerNotAssignedException(
+                                        "Trainer with id " + trainerId + " is not assigned to trainee with id "
+                                                        + traineeId);
+                }
+
+                TrainingType existingTrainingType = trainingTypeRepository.findById(trainingType.getId())
+                                .orElseThrow(() -> {
+                                        log.error("Training type not found with id: {}", trainingType.getId());
+                                        return new EntityNotFoundException(
+                                                        "Training type not found with id: " + trainingType.getId());
+                                });
+
+                if (!trainer.getSpecialization().getId().equals(existingTrainingType.getId())) {
+                        log.error("Training type {} does not match trainer specialization {}",
+                                        existingTrainingType.getName(), trainer.getSpecialization().getName());
+                        throw new ValidationException(
+                                        "Training type '" + existingTrainingType.getName() +
+                                                        "' does not match trainer's specialization '"
+                                                        + trainer.getSpecialization().getName() + "'");
+                }
+
+                validationUtil.validateTrainingDate(trainingDate);
+
+                validationUtil.validateTrainingDuration(trainingDuration);
+
+                List<Training> traineeTrainings = trainingRepository.findByTrainee_User_Username(
+                                trainee.getUser().getUsername());
+                boolean traineeHasTraining = traineeTrainings.stream()
+                                .anyMatch(t -> t.getTrainingDate().equals(trainingDate));
+                if (traineeHasTraining) {
+                        log.error("Trainee {} is not available on date {}", trainee.getUser().getUsername(),
+                                        trainingDate);
+                        throw new TraineeNotAvailableException(
+                                        "Trainee is not available on " + trainingDate
+                                                        + ". Another training is scheduled.");
+                }
+
+                List<Training> trainerTrainings = trainingRepository.findByTrainer_User_Username(
+                                trainer.getUser().getUsername());
+                boolean trainerHasTraining = trainerTrainings.stream()
+                                .anyMatch(t -> t.getTrainingDate().equals(trainingDate));
+                if (trainerHasTraining) {
+                        log.error("Trainer {} is not available on date {}", trainer.getUser().getUsername(),
+                                        trainingDate);
+                        throw new TrainerNotAvailableException(
+                                        "Trainer is not available on " + trainingDate
+                                                        + ". Another training is scheduled.");
+                }
 
                 Training training = new Training();
                 training.setTrainee(trainee);
                 training.setTrainer(trainer);
                 training.setTrainingName(trainingName);
-                training.setTrainingType(trainingType);
+                training.setTrainingType(existingTrainingType);
                 training.setTrainingDate(trainingDate);
                 training.setTrainingDuration(trainingDuration);
 
@@ -81,8 +151,27 @@ public class TrainingServiceImpl implements TrainingService {
         @Transactional(readOnly = true)
         public List<Training> getTraineeTrainingsWithCriteria(String traineeUsername, LocalDate fromDate,
                         LocalDate toDate, String trainerName, String trainingTypeName) {
-                log.debug("Fetching trainee trainings with criteria: traineeUsername={}, fromDate={}, toDate={}, trainerName={}, trainingType={}",
+                log.debug("Fetching trainee trainings with criteria: traineeUsername={}, fromDate={}, toDate={}, trainerName={}, trainingType=",
                                 traineeUsername, fromDate, toDate, trainerName, trainingTypeName);
+
+                validationUtil.validateNotBlank(traineeUsername, "Trainee username");
+
+                traineeRepository.findByUser_Username(traineeUsername)
+                                .orElseThrow(() -> {
+                                        log.error("Trainee not found: {}", traineeUsername);
+                                        return new EntityNotFoundException("Trainee not found: " + traineeUsername);
+                                });
+
+                validationUtil.validateReasonableDateRange(fromDate, toDate);
+
+                if (trainingTypeName != null && !trainingTypeName.trim().isEmpty()) {
+                        trainingTypeRepository.findByName(trainingTypeName)
+                                        .orElseThrow(() -> {
+                                                log.error("Training type not found: {}", trainingTypeName);
+                                                return new EntityNotFoundException(
+                                                                "Training type not found: " + trainingTypeName);
+                                        });
+                }
 
                 TraineeTrainingCriteriaDTO criteria = TraineeTrainingCriteriaDTO.builder()
                                 .traineeUsername(traineeUsername)
@@ -104,6 +193,16 @@ public class TrainingServiceImpl implements TrainingService {
                         LocalDate toDate, String traineeName) {
                 log.debug("Fetching trainer trainings with criteria: trainerUsername={}, fromDate={}, toDate={}, traineeName={}",
                                 trainerUsername, fromDate, toDate, traineeName);
+
+                validationUtil.validateNotBlank(trainerUsername, "Trainer username");
+
+                trainerRepository.findByUser_Username(trainerUsername)
+                                .orElseThrow(() -> {
+                                        log.error("Trainer not found: {}", trainerUsername);
+                                        return new EntityNotFoundException("Trainer not found: " + trainerUsername);
+                                });
+
+                validationUtil.validateReasonableDateRange(fromDate, toDate);
 
                 TrainerTrainingCriteriaDTO criteria = TrainerTrainingCriteriaDTO.builder()
                                 .trainerUsername(trainerUsername)

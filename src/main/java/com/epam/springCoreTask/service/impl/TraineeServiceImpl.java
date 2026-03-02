@@ -5,6 +5,8 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.epam.springCoreTask.exception.DuplicateAssignmentException;
+import com.epam.springCoreTask.exception.EntityNotFoundException;
 import com.epam.springCoreTask.model.Trainee;
 import com.epam.springCoreTask.model.Trainer;
 import com.epam.springCoreTask.model.User;
@@ -14,6 +16,7 @@ import com.epam.springCoreTask.service.TraineeService;
 import com.epam.springCoreTask.service.UserService;
 import com.epam.springCoreTask.util.PasswordGenerator;
 import com.epam.springCoreTask.util.UsernameGenerator;
+import com.epam.springCoreTask.util.ValidationUtil;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,10 +32,15 @@ public class TraineeServiceImpl implements TraineeService {
     private final UsernameGenerator usernameGenerator;
     private final PasswordGenerator passwordGenerator;
     private final UserService userService;
+    private final ValidationUtil validationUtil;
 
     @Override
     public Trainee createTrainee(String firstName, String lastName, java.time.LocalDate dateOfBirth, String address) {
         log.debug("Creating trainee: {} {}, dateOfBirth: {}, address: {}", firstName, lastName, dateOfBirth, address);
+
+        validationUtil.validateNotBlank(firstName, "First name");
+        validationUtil.validateNotBlank(lastName, "Last name");
+        validationUtil.validateDateOfBirth(dateOfBirth);
 
         List<String> existingUsernames = traineeRepository.findAllUsernames();
 
@@ -61,6 +69,21 @@ public class TraineeServiceImpl implements TraineeService {
     @Override
     public Trainee updateTrainee(Trainee trainee) {
         log.debug("Updating trainee: id={}, username={}", trainee.getId(), trainee.getUser().getUsername());
+
+        validationUtil.validateNotNull(trainee, "Trainee");
+        validationUtil.validateNotNull(trainee.getId(), "Trainee ID");
+
+        if (!traineeRepository.existsById(trainee.getId())) {
+            throw new EntityNotFoundException("Trainee not found with id: " + trainee.getId());
+        }
+
+        validationUtil.validateNotNull(trainee.getUser(), "User");
+        validationUtil.validateNotBlank(trainee.getUser().getFirstName(), "First name");
+        validationUtil.validateNotBlank(trainee.getUser().getLastName(), "Last name");
+
+        if (trainee.getDateOfBirth() != null) {
+            validationUtil.validateDateOfBirth(trainee.getDateOfBirth());
+        }
 
         Trainee updatedTrainee = traineeRepository.save(trainee);
         log.info("Trainee updated successfully: id={}", trainee.getId());
@@ -164,6 +187,7 @@ public class TraineeServiceImpl implements TraineeService {
         log.debug("Updating trainers list for trainee: traineeUsername={}, trainerUsernames={}",
                 traineeUsername, trainerUsernames);
 
+        validationUtil.validateNotBlank(traineeUsername, "Trainee username");
         Trainee trainee = getTraineeByUsername(traineeUsername);
 
         // Clear existing trainers
@@ -172,8 +196,15 @@ public class TraineeServiceImpl implements TraineeService {
         // Add new trainers
         if (trainerUsernames != null && !trainerUsernames.isEmpty()) {
             for (String trainerUsername : trainerUsernames) {
+                validationUtil.validateNotBlank(trainerUsername, "Trainer username");
                 Trainer trainer = trainerRepository.findByUser_Username(trainerUsername)
-                        .orElseThrow(() -> new IllegalArgumentException("Trainer not found: " + trainerUsername));
+                        .orElseThrow(() -> new EntityNotFoundException("Trainer not found: " + trainerUsername));
+
+                if (trainee.getTrainers().contains(trainer)) {
+                    throw new DuplicateAssignmentException(
+                            "Trainer " + trainerUsername + " is already assigned to trainee " + traineeUsername);
+                }
+
                 trainee.getTrainers().add(trainer);
             }
         }

@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.epam.springCoreTask.exception.EntityNotFoundException;
 import com.epam.springCoreTask.model.Trainer;
 import com.epam.springCoreTask.model.TrainingType;
 import com.epam.springCoreTask.model.User;
@@ -14,6 +15,7 @@ import com.epam.springCoreTask.service.TrainerService;
 import com.epam.springCoreTask.service.UserService;
 import com.epam.springCoreTask.util.PasswordGenerator;
 import com.epam.springCoreTask.util.UsernameGenerator;
+import com.epam.springCoreTask.util.ValidationUtil;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,22 +31,25 @@ public class TrainerServiceImpl implements TrainerService {
     private final UsernameGenerator usernameGenerator;
     private final PasswordGenerator passwordGenerator;
     private final UserService userService;
+    private final ValidationUtil validationUtil;
 
     @Override
     public Trainer createTrainer(String firstName, String lastName, String specialization) {
         log.debug("Creating trainer: {} {}, specialization: {}", firstName, lastName, specialization);
+
+        validationUtil.validateNotBlank(firstName, "First name");
+        validationUtil.validateNotBlank(lastName, "Last name");
+        validationUtil.validateNotBlank(specialization, "Specialization");
 
         List<String> existingUsernames = trainerRepository.findAllUsernames();
 
         String username = usernameGenerator.generateUsername(firstName, lastName, existingUsernames);
         String password = passwordGenerator.generatePassword();
 
-        // Find or create TrainingType
         TrainingType trainingType = trainingTypeRepository.findByName(specialization)
-                .orElseGet(() -> {
-                    TrainingType newType = new TrainingType();
-                    newType.setName(specialization);
-                    return trainingTypeRepository.save(newType);
+                .orElseThrow(() -> {
+                    log.error("Specialization not found: {}", specialization);
+                    return new EntityNotFoundException("Training type not found: " + specialization);
                 });
 
         User user = new User();
@@ -68,6 +73,17 @@ public class TrainerServiceImpl implements TrainerService {
     @Override
     public Trainer updateTrainer(Trainer trainer) {
         log.debug("Updating trainer: id={}, username={}", trainer.getId(), trainer.getUser().getUsername());
+
+        validationUtil.validateNotNull(trainer, "Trainer");
+        validationUtil.validateNotNull(trainer.getId(), "Trainer ID");
+
+        if (!trainerRepository.existsById(trainer.getId())) {
+            throw new EntityNotFoundException("Trainer not found with id: " + trainer.getId());
+        }
+
+        validationUtil.validateNotNull(trainer.getUser(), "User");
+        validationUtil.validateNotBlank(trainer.getUser().getFirstName(), "First name");
+        validationUtil.validateNotBlank(trainer.getUser().getLastName(), "Last name");
 
         Trainer updatedTrainer = trainerRepository.save(trainer);
         log.info("Trainer updated successfully: id={}", trainer.getId());
@@ -152,6 +168,8 @@ public class TrainerServiceImpl implements TrainerService {
     @Transactional(readOnly = true)
     public List<Trainer> getTrainersNotAssignedToTrainee(String traineeUsername) {
         log.debug("Fetching trainers not assigned to trainee: traineeUsername={}", traineeUsername);
+
+        validationUtil.validateNotBlank(traineeUsername, "Trainee username");
 
         List<Trainer> trainers = trainerRepository.findTrainersNotAssignedToTrainee(traineeUsername);
         log.info("Found {} unassigned trainers for trainee: {}", trainers.size(), traineeUsername);
