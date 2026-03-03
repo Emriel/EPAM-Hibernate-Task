@@ -42,7 +42,8 @@ public class TraineeServiceImpl implements TraineeService {
         validationUtil.validateNotBlank(lastName, "Last name");
         validationUtil.validateDateOfBirth(dateOfBirth);
 
-        List<String> existingUsernames = traineeRepository.findAllUsernames();
+        List<String> existingUsernames = new java.util.ArrayList<>(traineeRepository.findAllUsernames());
+        existingUsernames.addAll(trainerRepository.findAllUsernames());
 
         String username = usernameGenerator.generateUsername(firstName, lastName, existingUsernames);
         String password = passwordGenerator.generatePassword();

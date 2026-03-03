@@ -9,6 +9,7 @@ import com.epam.springCoreTask.exception.EntityNotFoundException;
 import com.epam.springCoreTask.model.Trainer;
 import com.epam.springCoreTask.model.TrainingType;
 import com.epam.springCoreTask.model.User;
+import com.epam.springCoreTask.repository.TraineeRepository;
 import com.epam.springCoreTask.repository.TrainerRepository;
 import com.epam.springCoreTask.repository.TrainingTypeRepository;
 import com.epam.springCoreTask.service.TrainerService;
@@ -26,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class TrainerServiceImpl implements TrainerService {
 
+    private final TraineeRepository traineeRepository;
     private final TrainerRepository trainerRepository;
     private final TrainingTypeRepository trainingTypeRepository;
     private final UsernameGenerator usernameGenerator;
@@ -41,7 +43,8 @@ public class TrainerServiceImpl implements TrainerService {
         validationUtil.validateNotBlank(lastName, "Last name");
         validationUtil.validateNotBlank(specialization, "Specialization");
 
-        List<String> existingUsernames = trainerRepository.findAllUsernames();
+        List<String> existingUsernames = new java.util.ArrayList<>(trainerRepository.findAllUsernames());
+        existingUsernames.addAll(traineeRepository.findAllUsernames());
 
         String username = usernameGenerator.generateUsername(firstName, lastName, existingUsernames);
         String password = passwordGenerator.generatePassword();
