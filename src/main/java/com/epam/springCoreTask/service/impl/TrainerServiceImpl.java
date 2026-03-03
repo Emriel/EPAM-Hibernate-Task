@@ -50,10 +50,7 @@ public class TrainerServiceImpl implements TrainerService {
         String password = passwordGenerator.generatePassword();
 
         TrainingType trainingType = trainingTypeRepository.findByName(specialization)
-                .orElseThrow(() -> {
-                    log.error("Specialization not found: {}", specialization);
-                    return new EntityNotFoundException("Training type not found: " + specialization);
-                });
+                .orElseThrow(() -> new EntityNotFoundException("Training type not found: " + specialization));
 
         User user = new User();
         user.setFirstName(firstName);
@@ -129,10 +126,7 @@ public class TrainerServiceImpl implements TrainerService {
         log.debug("Fetching trainer by username: {}", username);
 
         return trainerRepository.findByUser_Username(username)
-                .orElseThrow(() -> {
-                    log.warn("Trainer not found: username={}", username);
-                    return new IllegalArgumentException("Trainer not found with username: " + username);
-                });
+                .orElseThrow(() -> new IllegalArgumentException("Trainer not found with username: " + username));
     }
 
     @Override

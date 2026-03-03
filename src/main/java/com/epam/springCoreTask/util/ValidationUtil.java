@@ -86,11 +86,9 @@ public class ValidationUtil {
     }
 
     public void validateDateRange(LocalDate fromDate, LocalDate toDate) {
-        if (fromDate != null && toDate != null) {
-            if (fromDate.isAfter(toDate)) {
-                log.error("Validation failed: fromDate {} is after toDate {}", fromDate, toDate);
-                throw new InvalidDateException("From date cannot be after to date");
-            }
+        if (fromDate != null && toDate != null && fromDate.isAfter(toDate)) {
+            log.error("Validation failed: fromDate {} is after toDate {}", fromDate, toDate);
+            throw new InvalidDateException("From date cannot be after to date");
         }
     }
 

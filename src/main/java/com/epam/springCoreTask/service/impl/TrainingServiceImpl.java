@@ -52,16 +52,10 @@ public class TrainingServiceImpl implements TrainingService {
                 validationUtil.validateNotNull(trainingType.getId(), "Training type ID");
 
                 Trainee trainee = traineeRepository.findById(traineeId)
-                                .orElseThrow(() -> {
-                                        log.error("Trainee not found with id: {}", traineeId);
-                                        return new EntityNotFoundException("Trainee not found with id: " + traineeId);
-                                });
+                                .orElseThrow(() -> new EntityNotFoundException("Trainee not found with id: " + traineeId));
 
                 Trainer trainer = trainerRepository.findById(trainerId)
-                                .orElseThrow(() -> {
-                                        log.error("Trainer not found with id: {}", trainerId);
-                                        return new EntityNotFoundException("Trainer not found with id: " + trainerId);
-                                });
+                                .orElseThrow(() -> new EntityNotFoundException("Trainer not found with id: " + trainerId));
 
                 if (!trainee.getTrainers().contains(trainer)) {
                         log.error("Trainer {} is not assigned to trainee {}", trainerId, traineeId);
@@ -71,11 +65,8 @@ public class TrainingServiceImpl implements TrainingService {
                 }
 
                 TrainingType existingTrainingType = trainingTypeRepository.findById(trainingType.getId())
-                                .orElseThrow(() -> {
-                                        log.error("Training type not found with id: {}", trainingType.getId());
-                                        return new EntityNotFoundException(
-                                                        "Training type not found with id: " + trainingType.getId());
-                                });
+                                .orElseThrow(() -> new EntityNotFoundException(
+                                                "Training type not found with id: " + trainingType.getId()));
 
                 if (!trainer.getSpecialization().getId().equals(existingTrainingType.getId())) {
                         log.error("Training type {} does not match trainer specialization {}",
@@ -157,20 +148,14 @@ public class TrainingServiceImpl implements TrainingService {
                 validationUtil.validateNotBlank(traineeUsername, "Trainee username");
 
                 traineeRepository.findByUser_Username(traineeUsername)
-                                .orElseThrow(() -> {
-                                        log.error("Trainee not found: {}", traineeUsername);
-                                        return new EntityNotFoundException("Trainee not found: " + traineeUsername);
-                                });
+                                .orElseThrow(() -> new EntityNotFoundException("Trainee not found: " + traineeUsername));
 
                 validationUtil.validateReasonableDateRange(fromDate, toDate);
 
                 if (trainingTypeName != null && !trainingTypeName.trim().isEmpty()) {
                         trainingTypeRepository.findByName(trainingTypeName)
-                                        .orElseThrow(() -> {
-                                                log.error("Training type not found: {}", trainingTypeName);
-                                                return new EntityNotFoundException(
-                                                                "Training type not found: " + trainingTypeName);
-                                        });
+                                        .orElseThrow(() -> new EntityNotFoundException(
+                                                        "Training type not found: " + trainingTypeName));
                 }
 
                 TraineeTrainingCriteriaDTO criteria = TraineeTrainingCriteriaDTO.builder()
@@ -197,10 +182,7 @@ public class TrainingServiceImpl implements TrainingService {
                 validationUtil.validateNotBlank(trainerUsername, "Trainer username");
 
                 trainerRepository.findByUser_Username(trainerUsername)
-                                .orElseThrow(() -> {
-                                        log.error("Trainer not found: {}", trainerUsername);
-                                        return new EntityNotFoundException("Trainer not found: " + trainerUsername);
-                                });
+                                .orElseThrow(() -> new EntityNotFoundException("Trainer not found: " + trainerUsername));
 
                 validationUtil.validateReasonableDateRange(fromDate, toDate);
 

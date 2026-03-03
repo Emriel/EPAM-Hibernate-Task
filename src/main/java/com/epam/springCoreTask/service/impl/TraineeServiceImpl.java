@@ -135,10 +135,7 @@ public class TraineeServiceImpl implements TraineeService {
         log.debug("Fetching trainee by username: {}", username);
 
         return traineeRepository.findByUser_Username(username)
-                .orElseThrow(() -> {
-                    log.warn("Trainee not found: username={}", username);
-                    return new IllegalArgumentException("Trainee not found with username: " + username);
-                });
+                .orElseThrow(() -> new IllegalArgumentException("Trainee not found with username: " + username));
     }
 
     @Override
